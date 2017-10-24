@@ -4,6 +4,7 @@
 #include <string.h>
 #include <inttypes.h>
 
+#include "ssd1306/gfx_mono.h"
 #include "bluetooth.hpp"
 #include "queues.hpp"
 
@@ -42,6 +43,10 @@ int btstack_main(int argc, const char* argv[])
 
     queues_init();
     bluetooth_init();
+    gfx_mono_init();
+    ssd1306_display_on();
+    gfx_mono_draw_line(10, 10, 20, 20, GFX_PIXEL_SET);
+    gfx_mono_put_framebuffer();    
 
     // xTaskCreate(vATaskFunction, "PrintTask", 2048, NULL, 0, NULL);
         
