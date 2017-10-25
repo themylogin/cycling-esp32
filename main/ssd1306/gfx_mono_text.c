@@ -45,10 +45,6 @@
  */
 #include "stddef.h"
 #include "assert.h"
-#ifdef CONFIG_HUGEMEM
-# include "hugemem.h"
-#endif
-#include "progmem.h"
 
 #include "gfx_mono.h"
 #include "gfx_mono_text.h"
@@ -92,7 +88,7 @@ static void gfx_mono_draw_char_hugemem(const char ch, const gfx_coord_t x,
 	uint8_t rows_left;
 
 	/* Sanity check on parameters, assert if font is NULL. */
-	Assert(font != NULL);
+	assert(font != NULL);
 
 	gfx_coord_t inc_x = x;
 	gfx_coord_t inc_y = y;
@@ -170,14 +166,14 @@ static void gfx_mono_draw_char_hugemem(const char ch, const gfx_coord_t x,
 static void gfx_mono_draw_char_progmem(const char ch, const gfx_coord_t x,
 		const gfx_coord_t y, const struct font *font)
 {
-	uint8_t PROGMEM_PTR_T glyph_data;
+	const uint8_t *glyph_data;
 	uint16_t glyph_data_offset;
 	uint8_t char_row_size;
 	uint8_t rows_left;
 	uint8_t i;
 
 	/* Sanity check on parameters, assert if font is NULL. */
-	Assert(font != NULL);
+	assert(font != NULL);
 
 	gfx_coord_t inc_x = x;
 	gfx_coord_t inc_y = y;
@@ -233,7 +229,7 @@ static void gfx_mono_draw_char_progmem(const char ch, const gfx_coord_t x,
 
 		for (i = 0; i < pixelsToDraw; i++) {
 			if (i % CONFIG_FONT_PIXELS_PER_BYTE == 0) {
-				glyph_byte = PROGMEM_READ_BYTE(glyph_data);
+				glyph_byte = *(glyph_data);
 				glyph_data++;
 			}
 
@@ -263,8 +259,8 @@ static void gfx_mono_draw_char_progmem(const char ch, const gfx_coord_t x,
 void gfx_mono_draw_char(const char c, const gfx_coord_t x, const gfx_coord_t y,
 		const struct font *font)
 {
-	Assert(x <= GFX_MONO_LCD_WIDTH);
-	Assert(y <= GFX_MONO_LCD_HEIGHT);
+	assert(x <= GFX_MONO_LCD_WIDTH);
+	assert(y <= GFX_MONO_LCD_HEIGHT);
 	
 	gfx_mono_draw_filled_rect(x, y, font->width, font->height,
 			GFX_PIXEL_CLR);
@@ -282,7 +278,7 @@ void gfx_mono_draw_char(const char c, const gfx_coord_t x, const gfx_coord_t y,
 #endif
 	default:
 		/* Unsupported mode, call assert */
-		Assert(false);
+		assert(false);
 		break;
 	}
 }
@@ -304,8 +300,8 @@ void gfx_mono_draw_string(const char *str, gfx_coord_t x, gfx_coord_t y,
 	const gfx_coord_t start_of_string_position_x = x;
 
 	/* Sanity check on parameters, assert if str or font is NULL. */
-	Assert(str != NULL);
-	Assert(font != NULL);
+	assert(str != NULL);
+	assert(font != NULL);
 
 	/* Draw characters until trailing null byte */
 	do {
@@ -337,20 +333,20 @@ void gfx_mono_draw_string(const char *str, gfx_coord_t x, gfx_coord_t y,
  * \param y         Y coordinate on screen.
  * \param font      Font to draw string in
  */
-void gfx_mono_draw_progmem_string(char PROGMEM_PTR_T str, gfx_coord_t x,
+void gfx_mono_draw_progmem_string(char *str, gfx_coord_t x,
 		gfx_coord_t y, const struct font *font)
 {
 	char temp_char;
 
 	/* Sanity check on parameters, assert if str or font is NULL. */
-	Assert(str != NULL);
-	Assert(font != NULL);
+	assert(str != NULL);
+	assert(font != NULL);
 
 	/* Save X in order to know where to return to on CR. */
 	const gfx_coord_t start_of_string_position_x = x;
 
 	/* Draw characters until trailing null byte */
-	temp_char = PROGMEM_READ_BYTE((uint8_t PROGMEM_PTR_T)str);
+	temp_char = *((uint8_t *)str);
 
 	while (temp_char) {
 		/* Handle '\n' as newline, draw normal characters. */
@@ -364,7 +360,7 @@ void gfx_mono_draw_progmem_string(char PROGMEM_PTR_T str, gfx_coord_t x,
 			x += font->width;
 		}
 
-		temp_char = PROGMEM_READ_BYTE((uint8_t PROGMEM_PTR_T)(++str));
+		temp_char = *((uint8_t *)(++str));
 	}
 }
 
@@ -390,8 +386,8 @@ void gfx_mono_get_string_bounding_box(const char *str, const struct font *font,
 	gfx_coord_t x = 0;
 
 	/* Sanity check on parameters, assert if str or font is NULL. */
-	Assert(str != NULL);
-	Assert(font != NULL);
+	assert(str != NULL);
+	assert(font != NULL);
 
 	/* Handle each character until trailing null byte */
 	do {
@@ -425,7 +421,7 @@ void gfx_mono_get_string_bounding_box(const char *str, const struct font *font,
  * \param width    Pointer to width result
  * \param height   Pointer to height result
  */
-void gfx_mono_get_progmem_string_bounding_box(char PROGMEM_PTR_T str,
+void gfx_mono_get_progmem_string_bounding_box(const char *str,
 		const struct font *font, gfx_coord_t *width,
 		gfx_coord_t *height)
 {
@@ -438,11 +434,11 @@ void gfx_mono_get_progmem_string_bounding_box(char PROGMEM_PTR_T str,
 	gfx_coord_t x = 0;
 
 	/* Sanity check on parameters, assert if str or font is NULL. */
-	Assert(str != NULL);
-	Assert(font != NULL);
+	assert(str != NULL);
+	assert(font != NULL);
 
 	/* Handle each character until trailing null byte */
-	temp_char = PROGMEM_READ_BYTE((uint8_t PROGMEM_PTR_T)str);
+	temp_char = *((uint8_t *)str);
 
 	while (temp_char) {
 		/* Handle '\n' as newline, draw normal characters. */
@@ -458,7 +454,7 @@ void gfx_mono_get_progmem_string_bounding_box(char PROGMEM_PTR_T str,
 			}
 		}
 
-		temp_char = PROGMEM_READ_BYTE((uint8_t PROGMEM_PTR_T)(++str));
+		temp_char = *((uint8_t *)(++str));
 	}
 
 	/* Return values through references */

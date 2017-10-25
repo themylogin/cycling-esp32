@@ -44,7 +44,6 @@
  * Support and FAQ: visit <a href="http://www.atmel.com/design-support/">Atmel Support</a>
  */
 #include "ssd1306.h"
-#include "font.h"
 
 /**
  * \internal
@@ -148,25 +147,3 @@ void ssd1306_init(void)
 
 //	ssd1306_display_on();
 }
-
-/**
- * \brief Display text on OLED screen.
- * \param string String to display.
- */
-void ssd1306_write_text(const char *string)
-{
-	uint8_t *char_ptr;
-	uint8_t i;
-
-	while (*string != 0) {
-		if (*string < 0x7F) {
-			char_ptr = font_table[*string - 32];
-			for (i = 1; i <= char_ptr[0]; i++) {
-				ssd1306_write_data(char_ptr[i]);
-			}
-			ssd1306_write_data(0x00);
-		}
-			string++;
-	}
-}
-

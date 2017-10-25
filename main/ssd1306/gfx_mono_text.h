@@ -48,12 +48,6 @@
 
 #include <stdint.h>
 
-#include "compiler.h"
-#include "progmem.h"
-#ifdef CONFIG_HAVE_HUGEMEM
-# include "hugemem.h"
-#endif
-
 /**
  * \ingroup gfx_mono
  * \defgroup gfx_mono_font Font support
@@ -90,7 +84,7 @@ struct font {
 #ifdef CONFIG_HAVE_HUGEMEM
 		hugemem_ptr_t hugemem;
 #endif
-		uint8_t PROGMEM_PTR_T progmem;
+		const uint8_t *progmem;
 	} data;
 	/** Width of one font character, in pixels. */
 	uint8_t width;
@@ -110,17 +104,17 @@ void gfx_mono_draw_char(const char c, const gfx_coord_t x, const gfx_coord_t y,
 void gfx_mono_draw_string(const char *str, const gfx_coord_t x,
 		const gfx_coord_t y, const struct font *font);
 
-void gfx_mono_get_string_bounding_box(char const *str, const struct font *font,
+void gfx_mono_get_string_bounding_box(const char *str, const struct font *font,
 		gfx_coord_t *width, gfx_coord_t *height);
 
 /** @} */
 
 /** \name Strings located in flash */
 /** @{ */
-void gfx_mono_draw_progmem_string(char PROGMEM_PTR_T str, gfx_coord_t x,
+void gfx_mono_draw_progmem_string(char *str, gfx_coord_t x,
 		gfx_coord_t y, const struct font *font);
 
-void gfx_mono_get_progmem_string_bounding_box(char PROGMEM_PTR_T str,
+void gfx_mono_get_progmem_string_bounding_box(const char *str,
 		const struct font *font, gfx_coord_t *width,
 		gfx_coord_t *height);
 
