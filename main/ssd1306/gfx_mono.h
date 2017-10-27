@@ -95,6 +95,7 @@ enum gfx_mono_color {
 /* Cannot be moved to top, as they use the bitmap and color enums. */
 #include "gfx_mono_ug_2832hsweg04.h"
 #include "gfx_mono_generic.h"
+#include "sysfont.h"
 
 /** \name Circle Sector Definitions */
 /** @{ */

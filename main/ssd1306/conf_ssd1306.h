@@ -7,14 +7,10 @@
 #  define SSD1306_I2C_PORT      I2C_NUM_1
 #  define SSD1306_I2C_ADDR      0x3c
 
-// hc595 is limited 5 Mhz @ 2V
-// ssd1306 is limited 10 Mhz @ 3.3V
-#  define SSD1306_I2C_FREQ_HZ  5000000
+// ssd1306 is limited 10 Mhz @ 3.3V @ SPI
+// ssd1306 is limited 0.4 Mhz @ 3.3V @ I2C
+#  define SSD1306_I2C_FREQ_HZ  400000
 
-// Board independent configuration
-
-// Minimum clock period is 50ns@3.3V -> max frequency is 20MHz
-#define SSD1306_CLOCK_SPEED          UG_2832HSWEG04_BAUDRATE
 #define SSD1306_DISPLAY_CONTRAST_MAX 40
 #define SSD1306_DISPLAY_CONTRAST_MIN 20
 

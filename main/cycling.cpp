@@ -45,7 +45,8 @@ int btstack_main(int argc, const char* argv[])
     bluetooth_init();
     gfx_mono_init();
     ssd1306_display_on();
-    gfx_mono_draw_line(10, 10, 20, 20, GFX_PIXEL_SET);
+    gfx_mono_draw_string("Hello world!", 0,	0, &sysfont);
+    gfx_mono_draw_line(0, 18, 96, 18, GFX_PIXEL_SET);
     gfx_mono_put_framebuffer();    
 
     // xTaskCreate(vATaskFunction, "PrintTask", 2048, NULL, 0, NULL);
