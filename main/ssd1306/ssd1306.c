@@ -44,39 +44,27 @@
  * Support and FAQ: visit <a href="http://www.atmel.com/design-support/">Atmel Support</a>
  */
 #include "ssd1306.h"
+#include "driver/i2c.h"
 
 /**
  * \internal
  * \brief Initialize the hardware interface
  *
- * Depending on what interface used for interfacing the OLED controller this
- * function will initialize the necessary hardware.
+ * Initialize ESP's I2C interface
  */
 static void ssd1306_interface_init(void)
 {
-#ifdef SSD1306_SERIAL_INTERFACE
-	spi_flags_t spi_flags = SPI_MODE_0;
-	board_spi_select_id_t spi_select_id = 0;
-#endif
-
-#if defined(SSD1306_USART_SPI_INTERFACE)
-	struct usart_spi_device device = {
-		.id = SSD1306_CS_PIN,
-	};
-	usart_spi_init(SSD1306_USART_SPI);
-	usart_spi_setup_device(SSD1306_USART_SPI, &device, spi_flags,
-			SSD1306_CLOCK_SPEED, spi_select_id);
-#elif defined(SSD1306_SPI_INTERFACE)
-	struct spi_device device = {
-		.id = SSD1306_CS_PIN,
-	};
-	spi_master_init(SSD1306_SPI);
-	spi_master_setup_device(SSD1306_SPI, &device, spi_flags,
-			SSD1306_CLOCK_SPEED, spi_select_id);
-#ifdef SAM
-	spi_enable(SSD1306_SPI);
-#endif
-#endif
+    // This board doesn't use CS pin
+    int i2c_master_port = SSD1306_I2C_PORT;
+    i2c_config_t conf;
+    conf.mode = I2C_MODE_MASTER;
+    conf.sda_io_num = SSD1306_SDA_PIN;
+    conf.sda_pullup_en = GPIO_PULLUP_ENABLE;
+    conf.scl_io_num = SSD1306_SCL_PIN;
+    conf.scl_pullup_en = GPIO_PULLUP_ENABLE;
+    conf.master.clk_speed = SSD1306_I2C_FREQ_HZ;
+    i2c_param_config(i2c_master_port, &conf);
+    i2c_driver_install(i2c_master_port, conf.mode, I2C_MASTER_RX_BUF_DISABLE, I2C_MASTER_TX_BUF_DISABLE, 0);
 }
 
 /**

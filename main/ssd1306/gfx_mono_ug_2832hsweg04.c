@@ -268,10 +268,11 @@ void gfx_mono_ssd1306_put_page(gfx_mono_color_t *data, gfx_coord_t page,
 #endif
 	ssd1306_set_page_address(page);
 	ssd1306_set_column_address(column);
-
+	i2c_cmd_handle_t cmd = ssd1306_i2c_start();
 	do {
-		ssd1306_write_data(*data++);
+		ssd1306_write_data(*data++, cmd);
 	} while (--width);
+	ssd1306_i2c_end(cmd);
 }
 
 /**

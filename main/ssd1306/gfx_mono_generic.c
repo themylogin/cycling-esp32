@@ -474,9 +474,7 @@ void gfx_mono_generic_put_bitmap(struct gfx_mono_bitmap *bitmap, gfx_coord_t x,
 {
 	gfx_coord_t num_pages = bitmap->height / 8;
 	gfx_coord_t page = y / 8;
-	gfx_coord_t column;
 	gfx_coord_t i;
-	gfx_mono_color_t temp;
 
     for (i = 0; i < num_pages; i++) {
         gfx_mono_put_page(bitmap->data

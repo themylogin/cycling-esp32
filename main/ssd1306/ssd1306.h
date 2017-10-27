@@ -6,6 +6,13 @@
 #include "driver/gpio.h"
 #include "driver/i2c.h"
 
+#define ACK_CHECK_EN   0x1     /*!< I2C master will check ack from slave*/
+#define ACK_CHECK_DIS  0x0     /*!< I2C master will not check ack from slave */
+#define I2C_MASTER_TX_BUF_DISABLE   0   /*!< I2C master do not need buffer */
+#define I2C_MASTER_RX_BUF_DISABLE   0   /*!< I2C master do not need buffer */
+#define WRITE_BIT  0 /*!< I2C master write */
+#define READ_BIT   1  /*!< I2C master read */
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -50,9 +57,6 @@ extern "C" {
 #define SSD1306_CMD_SET_VERTICAL_SCROLL_AREA        0xA3
 //@}
 
-// Atmel ASF to ESP-IDF:
-#define arch_ioport_set_pin_level    gpio_set_level
-    
 #define ssd1306_reset_clear()    arch_ioport_set_pin_level(SSD1306_RES_PIN, false)
 #define ssd1306_reset_set()      arch_ioport_set_pin_level(SSD1306_RES_PIN, true)
 
@@ -70,20 +74,14 @@ extern "C" {
  */
 static void ssd1306_write_command(uint8_t command)
 {
-#if defined(SSD1306_USART_SPI_INTERFACE)
-	struct usart_spi_device device = {.id = SSD1306_CS_PIN};
-	usart_spi_select_device(SSD1306_USART_SPI, &device);
-	ssd1306_sel_cmd();
-	usart_spi_transmit(SSD1306_USART_SPI, command);
-	usart_spi_deselect_device(SSD1306_USART_SPI, &device);
-#elif defined(SSD1306_SPI_INTERFACE)
-	struct spi_device device = {.id = SSD1306_CS_PIN};
-	spi_select_device(SSD1306_SPI, &device);
-	ssd1306_sel_cmd();
-	spi_write_single(SSD1306_SPI, command);
-	delay_us(SSD1306_LATENCY); // At least 3us
-	spi_deselect_device(SSD1306_SPI, &device);
-#endif
+    i2c_cmd_handle_t cmd = i2c_cmd_link_create();
+    i2c_master_start(cmd);
+    i2c_master_write_byte(cmd, ( SSD1306_I2C_ADDR << 1 ) | WRITE_BIT, ACK_CHECK_EN);
+    i2c_master_write_byte(cmd, 0x80, ACK_CHECK_EN);
+    i2c_master_write_byte(cmd, command, ACK_CHECK_EN);
+    i2c_master_stop(cmd);
+    i2c_master_cmd_begin(SSD1306_I2C_PORT, cmd, 1000 / portTICK_RATE_MS);
+    i2c_cmd_link_delete(cmd);
 }
 
 /**
@@ -94,23 +92,25 @@ static void ssd1306_write_command(uint8_t command)
  *
  * \param data the data to write
  */
-static inline void ssd1306_write_data(uint8_t data)
+static inline void ssd1306_write_data(uint8_t data, i2c_cmd_handle_t cmd)
 {
-#if defined(SSD1306_USART_SPI_INTERFACE)
-	struct usart_spi_device device = {.id = SSD1306_CS_PIN};
-	usart_spi_select_device(SSD1306_USART_SPI, &device);
-	arch_ioport_set_pin_level(SSD1306_DC_PIN, true);
-	usart_spi_transmit(SSD1306_USART_SPI, data);
-	ssd1306_sel_cmd();
-	usart_spi_deselect_device(SSD1306_USART_SPI, &device);
-#elif defined(SSD1306_SPI_INTERFACE)
-	struct spi_device device = {.id = SSD1306_CS_PIN};
-	spi_select_device(SSD1306_SPI, &device);
-	ssd1306_sel_data();
-	spi_write_single(SSD1306_SPI, data);
-	delay_us(SSD1306_LATENCY); // At least 3us
-	spi_deselect_device(SSD1306_SPI, &device);
-#endif
+    i2c_master_write_byte(cmd, data, ACK_CHECK_EN);
+}
+
+static inline i2c_cmd_handle_t ssd1306_i2c_start(void)
+{
+	i2c_cmd_handle_t cmd = i2c_cmd_link_create();
+	i2c_master_start(cmd);
+	i2c_master_write_byte(cmd, ( SSD1306_I2C_ADDR << 1 ) | WRITE_BIT, ACK_CHECK_EN);
+	i2c_master_write_byte(cmd, 0x40, ACK_CHECK_EN);
+	return cmd;
+}
+
+static inline void ssd1306_i2c_end(i2c_cmd_handle_t cmd)
+{
+	i2c_master_stop(cmd);
+	i2c_master_cmd_begin(SSD1306_I2C_PORT, cmd, 1000 / portTICK_RATE_MS);
+	i2c_cmd_link_delete(cmd);
 }
 
 /**
@@ -150,11 +150,13 @@ static inline uint8_t ssd1306_get_status(void)
  */
 static inline void ssd1306_hard_reset(void)
 {
-	arch_ioport_set_pin_level(SSD1306_RES_PIN, false);
+	gpio_pad_select_gpio(SSD1306_RES_PIN);
+	gpio_set_direction(SSD1306_RES_PIN, GPIO_MODE_OUTPUT);
+	gpio_set_level(SSD1306_RES_PIN, false);
 	// TODO:
     //vTaskDelay(SSD1306_LATENCY / portTICK_PERIOD_MS);  // At least 3us
     vTaskDelay(1 / portTICK_PERIOD_MS);  // At least 3us
-	arch_ioport_set_pin_level(SSD1306_RES_PIN, true);
+    gpio_set_level(SSD1306_RES_PIN, true);
 	vTaskDelay(1 / portTICK_PERIOD_MS);  // At least 3us
 }
 //@}
@@ -290,10 +292,12 @@ static inline void ssd1306_clear(void)
 	{
 		ssd1306_set_page_address(page);
 		ssd1306_set_column_address(0);
+		i2c_cmd_handle_t cmd = ssd1306_i2c_start();
 		for (col = 0; col < 128; ++col)
 		{
-			ssd1306_write_data(0x00);
+			ssd1306_write_data(0x00, cmd);
 		}
+		ssd1306_i2c_end(cmd);
 	}
 }
 //@}

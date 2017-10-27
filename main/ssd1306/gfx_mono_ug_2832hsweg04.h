@@ -51,6 +51,10 @@
 #include "gfx_mono.h"
 #include "gfx_mono_framebuffer.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * \ingroup gfx_mono
  * \defgroup gfx_mono_2832hsweg04_group 2832HSWEG04 graphic library abstraction
@@ -156,4 +160,8 @@ void gfx_mono_ssd1306_mask_byte(gfx_coord_t page, gfx_coord_t column,
 
 /** @} */
 
+
+#ifdef __cplusplus
+}
+#endif
 #endif /* GFX_MONO_2832HSWEG04_H */

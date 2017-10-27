@@ -47,6 +47,10 @@
 #define GFX_MONO_GENERIC
 #include "gfx_mono.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * \ingroup gfx_mono
  * \defgroup gfx_mono_generic_group Generic monochrome graphic primitives
@@ -78,7 +82,7 @@ struct gfx_mono_bitmap {
 	gfx_coord_t width;
 	/** Height of bitmap */
 	gfx_coord_t height;
-	const gfx_mono_color_t *data;
+	gfx_mono_color_t *data;
 };
 
 void gfx_mono_generic_draw_horizontal_line(gfx_coord_t x, gfx_coord_t y,
@@ -112,4 +116,7 @@ void gfx_mono_generic_put_bitmap(struct gfx_mono_bitmap *bitmap, gfx_coord_t x,
 
 /** @} */
 
+#ifdef __cplusplus
+}
+#endif
 #endif /* GFX_MONO_GENERIC */
