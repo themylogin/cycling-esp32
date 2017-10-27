@@ -92,14 +92,6 @@ enum gfx_mono_color {
 	GFX_PIXEL_XOR = 2,
 };
 
-/** Bitmap types */
-enum gfx_mono_bitmap_type {
-	/** Bitmap stored in SRAM */
-	GFX_MONO_BITMAP_RAM,
-	/** Bitmap stored in progmem */
-	GFX_MONO_BITMAP_PROGMEM
-};
-
 /* Cannot be moved to top, as they use the bitmap and color enums. */
 #include "gfx_mono_ug_2832hsweg04.h"
 #include "gfx_mono_generic.h"

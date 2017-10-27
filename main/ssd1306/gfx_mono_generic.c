@@ -478,29 +478,11 @@ void gfx_mono_generic_put_bitmap(struct gfx_mono_bitmap *bitmap, gfx_coord_t x,
 	gfx_coord_t i;
 	gfx_mono_color_t temp;
 
-	switch (bitmap->type) {
-	case GFX_MONO_BITMAP_PROGMEM:
-		for (i = 0; i < num_pages; i++) {
-			for (column = 0; column < bitmap->width; column++) {
-				temp = *(bitmap->data
-						+ (i * bitmap->width)
-						+ column);
-				gfx_mono_put_byte(i + page, column + x, temp);
-			}
-		}
-		break;
-
-	case GFX_MONO_BITMAP_RAM:
-		for (i = 0; i < num_pages; i++) {
-			gfx_mono_put_page(bitmap->data
-					+ (i * bitmap->width), page + i, x,
-					bitmap->width);
-		}
-		break;
-
-	default:
-		break;
-	}
+    for (i = 0; i < num_pages; i++) {
+        gfx_mono_put_page(bitmap->data
+                + (i * bitmap->width), page + i, x,
+                bitmap->width);
+    }
 }
 
 /** @} */

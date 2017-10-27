@@ -78,8 +78,6 @@ struct gfx_mono_bitmap {
 	gfx_coord_t width;
 	/** Height of bitmap */
 	gfx_coord_t height;
-	/** Bitmap type */
-	enum gfx_mono_bitmap_type type;
 	const gfx_mono_color_t *data;
 };
 

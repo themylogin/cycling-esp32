@@ -44,6 +44,7 @@
  * Support and FAQ: visit <a href="http://www.atmel.com/design-support/">Atmel Support</a>
  */
 #include "gfx_mono_ug_2832hsweg04.h"
+#include <string.h>
 
 /* If we are using a serial interface without readback, use framebuffer */
 #define CONFIG_SSD1306_FRAMEBUFFER
@@ -125,28 +126,29 @@ void gfx_mono_ssd1306_put_framebuffer(void)
  */
 void gfx_mono_ssd1306_put_dma_framebuffer(void)
 {
-	// Reset coordinates to 0x,0y
-	ssd1306_set_page_address(0);
-	ssd1306_set_column_address(0);
-	
-	// Select SSD1306 SS pin
-	struct usart_spi_device device = {.id = SSD1306_CS_PIN};
-	usart_spi_select_device(SSD1306_USART_SPI, &device);
-	arch_ioport_set_pin_level(SSD1306_DC_PIN, true);
-	
-	// Start DMA transaction
-	dma_channel_write_source(SST_DISPLAY_DMA_CHANNEL, (uint16_t)(uintptr_t) framebuffer);
-	dma_channel_write_transfer_count(SST_DISPLAY_DMA_CHANNEL, (GFX_MONO_LCD_FRAMEBUFFER_SIZE));
-	dma_channel_enable(SST_DISPLAY_DMA_CHANNEL);
-	
-	// Wait for a transaction to complete
-	do {} while ((dma_get_channel_status(SST_DISPLAY_DMA_CHANNEL) != DMA_CH_TRANSFER_COMPLETED) ||
-				(dma_channel_is_busy(SST_DISPLAY_DMA_CHANNEL)));
-	delay_cycles(25);
-				
-	// Deselect SSD1306 SS pin
-	ssd1306_sel_cmd();
-	usart_spi_deselect_device(SSD1306_USART_SPI, &device);
+    // Fuck the DMA on 240 MHz !
+// 	// Reset coordinates to 0x,0y
+// 	ssd1306_set_page_address(0);
+// 	ssd1306_set_column_address(0);
+// 	
+// 	// Select SSD1306 SS pin
+// 	struct usart_spi_device device = {.id = SSD1306_CS_PIN};
+// 	usart_spi_select_device(SSD1306_USART_SPI, &device);
+// 	arch_ioport_set_pin_level(SSD1306_DC_PIN, true);
+// 	
+// 	// Start DMA transaction
+// 	dma_channel_write_source(SST_DISPLAY_DMA_CHANNEL, (uint16_t)(uintptr_t) framebuffer);
+// 	dma_channel_write_transfer_count(SST_DISPLAY_DMA_CHANNEL, (GFX_MONO_LCD_FRAMEBUFFER_SIZE));
+// 	dma_channel_enable(SST_DISPLAY_DMA_CHANNEL);
+// 	
+// 	// Wait for a transaction to complete
+// 	do {} while ((dma_get_channel_status(SST_DISPLAY_DMA_CHANNEL) != DMA_CH_TRANSFER_COMPLETED) ||
+// 				(dma_channel_is_busy(SST_DISPLAY_DMA_CHANNEL)));
+// 	delay_cycles(25);
+// 				
+// 	// Deselect SSD1306 SS pin
+// 	ssd1306_sel_cmd();
+// 	usart_spi_deselect_device(SSD1306_USART_SPI, &device);
 }
 
 /**
