@@ -1,119 +1,63 @@
-#include <deque>
-#include <mutex>
-#include <vector>
+#pragma once
 
-#include "optional.hpp"
+#include <cstdint>
+#include <cstring>
 
-using std::deque;
-using std::mutex;
-using std::vector;
+#include <esp_log.h>
 
-using std::experimental::optional;
-
-template<typename T>
+template<size_t item_count, size_t item_size>
 class ring_buffer
 {
 public:
-    ring_buffer(size_t capacity)
+    ring_buffer()
     {
-        this->pool.resize(capacity);
+        this->index = 0;
+        this->count = 0;
+    }
 
-        for (auto it = this->pool.begin(); it != this->pool.end(); it++)
+    void write(uint8_t* src, size_t length)
+    {
+        if (this->count == item_count)
         {
-            this->empty.push_back(&*it);
+            ESP_LOGW(TAG, "Ring buffer overflow");
+
+            memcpy(this->data[this->index], src, length);
+            this->lengths[index] = length;
+
+            this->index = (this->index + 1) % item_count;
+        }
+        else
+        {
+            size_t i = (this->index + this->count) % item_count;
+            memcpy(this->data[i], src, length);
+            this->lengths[i] = length;
+
+            this->count++;
         }
     }
 
-    optional<T&> consume()
+    bool read(uint8_t* dst, size_t* length)
     {
-        this->lock.lock();
-
-        optional<T&> result;
-        if (!this->filled.empty())
+        if (this->count == 0)
         {
-            result = *this->filled.front();
-            this->filled.pop_front();
+            return false;
         }
 
-        this->lock.unlock();
+        memcpy(dst, this->data[this->index], this->lengths[this->index]);
+        *length = this->lengths[this->index];
 
-        return result;
-    }
+        this->index = (this->index + 1) % item_count;
+        this->count--;
 
-    void notify_consume_success(T& v)
-    {
-        this->empty.push_back(&v);
-    }
-
-    void notify_consume_failure(T& v)
-    {
-        this->filled.push_front(&v);
-    }
-
-    T& produce()
-    {
-        this->lock.lock();
-
-        if (this->empty.empty())
-        {
-            T& dropped = *this->filled.front();
-            this->filled.pop_front();
-
-            this->empty.push_back(&dropped);
-        }
-
-        T& result = *this->empty.front();
-        this->empty.pop_front();
-
-        this->lock.unlock();
-
-        return result;
-    }
-
-    void notify_produce_success(T& v)
-    {
-        this->filled.push_back(&v);
-    }
-
-    void notify_produce_failure(T& v)
-    {
-        this->empty.push_front(&v);
-    }
-
-    typename deque<T*>::iterator begin()
-    {
-        return this->filled.begin();
-    }
-
-    typename deque<T*>::iterator end()
-    {
-        return this->filled.end();
-    }
-
-    size_t count() const
-    {
-        return this->filled.size();
-    }
-
-    void release(T& v)
-    {
-        for (auto it = this->filled.begin(); it != this->filled.end(); it++)
-        {
-            if (*it == &v)
-            {
-                this->filled.erase(it);
-                break;
-            }
-        }
-
-        this->empty.push_back(&v);
+        return true;
     }
 
 private:
-    vector<T> pool;
+    static constexpr const char* TAG = "ring_buffer";
 
-    deque<T*> filled;
-    deque<T*> empty;
+    uint8_t data[item_count][item_size];
+    size_t lengths[item_count];
 
-    mutex lock;
+    size_t index;
+    size_t count;
 };

@@ -5,7 +5,8 @@
 
 #include "btstack.h"
 
-#include "queues.hpp"
+bluetooth::Sender* bluetooth_sender;
+bluetooth::Receiver* bluetooth_receiver;
 
 #define RFCOMM_SERVER_CHANNEL 1
 
@@ -65,11 +66,12 @@ void bluetooth_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t* pa
 
                 case RFCOMM_EVENT_CAN_SEND_NOW:
                     {
-                        if (incoming.canStartConsuming())
+                        uint8_t buffer[bluetooth::max_outgoing_packet_size];
+                        size_t size;
+
+                        if (bluetooth_sender->request_data(buffer, &size))
                         {
-                            RadioMessage message = incoming.startConsuming();
-                            rfcomm_send(rfcomm_cid, message.buffer, message.size);
-                            incoming.endConsuming(message);
+                            rfcomm_send(rfcomm_cid, buffer, size);
 
                             bluetooth_send_messages();
                         }
@@ -88,16 +90,7 @@ void bluetooth_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t* pa
                         
         case RFCOMM_DATA_PACKET:
             {
-                RadioMessage message = outgoing.startProducing();
-                message.size = size;
-                memcpy(message.buffer, packet, size);
-                outgoing.endProducing(message);
-
-                RadioMessage copy = incoming.startProducing();
-                copy.size = size;
-                memcpy(copy.buffer, packet, size);
-                incoming.endProducing(copy);
-                bluetooth_send_messages();
+                bluetooth_receiver->receive(packet, size);
             }
             break;
 
