@@ -34,6 +34,11 @@ void NeighborsListProcessor::send(Neighbors* neighbors, Network* network, time_t
 {
     auto addresses = neighbors->get_neighbors(time);
 
+    if (addresses.size() == 0)
+    {
+        ESP_LOGI(TAG, "No neighbors, not broadcasting");
+    }
+
     ESP_LOGI(TAG, "Broadcasting %d neighbors", addresses.size());
     network->send(reinterpret_cast<uint8_t*>(addresses.data()),
                   addresses.size() * sizeof(address_t),

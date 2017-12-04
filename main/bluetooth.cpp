@@ -3,7 +3,11 @@
 #include <inttypes.h>
 #include <stdint.h>
 
-#include "btstack.h"
+#include <esp_log.h>
+
+#include <btstack.h>
+
+static const char* TAG = "bluetooth";
 
 bluetooth::Sender* bluetooth_sender;
 bluetooth::Receiver* bluetooth_receiver;
@@ -66,12 +70,14 @@ void bluetooth_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t* pa
 
                 case RFCOMM_EVENT_CAN_SEND_NOW:
                     {
-                        uint8_t buffer[bluetooth::max_outgoing_packet_size];
+                        uint8_t buffer[bluetooth::max_outgoing_packet_size + 2];
                         size_t size;
 
-                        if (bluetooth_sender->request_data(buffer, &size))
+                        if (bluetooth_sender->request_data(buffer + 2, &size))
                         {
-                            rfcomm_send(rfcomm_cid, buffer, size);
+                            *reinterpret_cast<uint16_t*>(buffer) = size;
+
+                            rfcomm_send(rfcomm_cid, buffer, size + 2);
 
                             bluetooth_send_messages();
                         }
@@ -125,5 +131,11 @@ void bluetooth_init()
 
 void bluetooth_send_messages()
 {
+    if (rfcomm_cid == 0)
+    {
+        ESP_LOGW(TAG, "No bluetooth connection available");
+        return;
+    }
+
     rfcomm_request_can_send_now_event(rfcomm_cid);
 }

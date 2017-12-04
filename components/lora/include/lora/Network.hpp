@@ -50,6 +50,11 @@ public:
     {
         auto packet = reinterpret_cast<Packet*>(data);
 
+        if (packet->src == this->address)
+        {
+            return false;
+        }
+
         if (!this->deduplicator->receive(packet))
         {
             return false;
@@ -79,6 +84,11 @@ public:
     void send(uint8_t* payload, size_t size, uint32_t flags = 0)
     {
         this->raw_send(this->address, 0, esp_random(), flags, payload, size);
+    }
+
+    void periodic(time_t time)
+    {
+        this->neighbors_list_processor->send(this->neighbors, this, time);
     }
 
 private:

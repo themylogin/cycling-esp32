@@ -81,6 +81,14 @@ public:
         }
     }
 
+    void periodic(time_t time)
+    {
+        for (auto& it : this->networks)
+        {
+            it.second->periodic(time);
+        }
+    }
+
 private:
     static constexpr const char* TAG = "lora::networks";
 
